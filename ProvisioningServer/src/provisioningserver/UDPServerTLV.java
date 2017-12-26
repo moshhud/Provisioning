@@ -13,7 +13,7 @@ public class UDPServerTLV extends Thread{
 	ProcessService obProcessService;
 	   
 	
-	String remoteIP = "192.168.20.131";
+	String remoteIP = "192.168.20.133";
 	int remotePort = 220;
 	static String serverIP = "43.240.101.55";
  	static int serverPort = 4444;
