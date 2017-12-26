@@ -18,17 +18,31 @@ import java.sql.Statement;
 public class Processor extends Thread{
 	static Logger logger = Logger.getLogger(Processor.class);
 	DatagramPacket receivePacket = null;
-	final int PACKET_TYPE_CONFIGURATION_REQUEST=0x0000;
-	final int PACKET_TYPE_CONFIGURATION_RESPONSE=0x0001;
+	final int PACKET_TYPE_IPCHANGER_IP_REQUEST=0x0000;
+	final int PACKET_TYPE_IPCHANGER_IP_RESPONSE=0x0001;
 	final int VOICE_LISTEN_IP_LIST=0x0002;
 	final int MEDIA_PROXY_PUBLIC_IP_LIST=0x0003;
 	final int OPERATOR_CODE=0x0004;  
+	
+	final int PACKET_TYPE_MAILSERVER_REQUEST=0x0064;
+	final int PACKET_TYPE_MAILSERVER_RESPONSE=0x0065;
+	final int MAILSERVER_IP=0x0066;
+	final int MAILSERVER_PORT=0x0067;
+	final int AUTH_MAIL_ADDRESS=0x0068;
+	final int AUTH_MAIL_PASS=0x0069;	
 
 	String remoteIP = "192.168.20.130";
 	int remotePort = 220;
 	String ip_changer_voice_listen_ip = null;
 	String ip_changer_public_ip = null;
 	String operator_code = null;
+	
+	String mailServerIP = null;
+	String mailServerPort=null;
+	String mailID = null;
+	String mailPass = null;
+	
+	
 	
 
 	public Processor(DatagramPacket receivePacket){
@@ -39,11 +53,8 @@ public class Processor extends Thread{
 		
 		
 	}
-	public void run(){
-			
-		processConnection();
-		
-		
+	public void run(){			
+		processConnection();		
 	}
 	
 
@@ -80,7 +91,7 @@ public void checkReceivedData(byte[] data,int len){
         
         try{
         	switch(pktType){
-            	case PACKET_TYPE_CONFIGURATION_REQUEST:              	             	    
+            	case PACKET_TYPE_IPCHANGER_IP_REQUEST:              	             	    
             	    logger.debug("Got configuration request");
             	    //check source IP with database and if exists then provide configuration...
             	    if(loadDataFromDB()) {
@@ -92,6 +103,16 @@ public void checkReceivedData(byte[] data,int len){
             	    }
             	    
             	    break;
+            	case PACKET_TYPE_MAILSERVER_REQUEST:
+            		logger.debug("Got IP Changer info request");
+            		if(loadDataFromDB_MailInfo()) {
+            	    	DatagramPacket sendPacket = createResponsePacket();                  
+            	    	UDPServerTLV.getInstance().serverSocket.send(sendPacket);
+            	    }
+            	    else {
+            	    	logger.debug("No Data Found");
+            	    }
+            		break;
             	default:
             	    logger.debug("Invalid Request.");
             	    break;
@@ -155,8 +176,8 @@ public void checkReceivedData(byte[] data,int len){
 	        int index=0;   	          
 	         
 	        //packet type
-	        sendData[index++]=(byte)((PACKET_TYPE_CONFIGURATION_RESPONSE>>8) & 0xff);
-	        sendData[index++]=(byte)((PACKET_TYPE_CONFIGURATION_RESPONSE) & 0xff);
+	        sendData[index++]=(byte)((PACKET_TYPE_IPCHANGER_IP_RESPONSE>>8) & 0xff);
+	        sendData[index++]=(byte)((PACKET_TYPE_IPCHANGER_IP_RESPONSE) & 0xff);
 	        //packet length	        
 	        //sendData[index++]=(byte)(((0x0012)>>8) & 0xff);
 	        //sendData[index++]=(byte)(((0x0012)) & 0xff);
@@ -194,12 +215,34 @@ public void checkReceivedData(byte[] data,int len){
 	        	sendData[index++] = (byte)IP.charAt(i);
 	        }
 	        
-	        //attribute type    
-	        sendData[index++]=(byte)(((OPERATOR_CODE)>>8) & 0xff);
-	        sendData[index++]=(byte)(((OPERATOR_CODE)) & 0xff);
+	        sendData[2]=(byte)(((index)>>8) & 0xff);
+	        sendData[3]=(byte)(((index)) & 0xff);
+         
+	        //logger.debug("Index: "+index);
+	           
+	       	      
+	        index=encodeBytes(sendData, index);
 	        
-	        IP = operator_code;
-	        l = IP.length();	        
+	        DatagramPacket sendPacket=new DatagramPacket(sendData,index,InetAddress.getByName(remoteIP),remotePort);
+	        return sendPacket;
+	}// 
+     
+     private  DatagramPacket createResponsePacket() throws UnknownHostException{
+	        
+	        byte [] sendData=new byte[2048];
+	        int index=0;   	          
+	         
+	        //packet type
+	        sendData[index++]=(byte)((PACKET_TYPE_MAILSERVER_RESPONSE>>8) & 0xff);
+	        sendData[index++]=(byte)((PACKET_TYPE_MAILSERVER_RESPONSE) & 0xff);	        
+	        index++;
+	        index++;
+	        //attribute type    
+	        sendData[index++]=(byte)(((MAILSERVER_IP)>>8) & 0xff);
+	        sendData[index++]=(byte)(((MAILSERVER_IP)) & 0xff);
+	        
+	        String str = mailServerIP;
+	        int l = str.length();	        
 	        
 	       	//attribute length        
 	        sendData[index++]=(byte)(((l)>>8) & 0xff);
@@ -207,12 +250,92 @@ public void checkReceivedData(byte[] data,int len){
 	        
 	        //attribute value
 	        for(int i=0;i<l;i++){	        		        	
-	        	sendData[index++] = (byte)IP.charAt(i);
+	        	sendData[index++] = (byte)str.charAt(i);
+	        }	        
+	        	        
+	        //attribute type    
+	        sendData[index++]=(byte)(((MAILSERVER_PORT)>>8) & 0xff);
+	        sendData[index++]=(byte)(((MAILSERVER_PORT)) & 0xff);
+	        
+	        str = mailServerPort;
+	        l = str.length();	        
+	        
+	       	//attribute length        
+	        sendData[index++]=(byte)(((l)>>8) & 0xff);
+	        sendData[index++]=(byte)(((l)) & 0xff);
+	        
+	        //attribute value
+	        for(int i=0;i<l;i++){	        		        	
+	        	sendData[index++] = (byte)str.charAt(i);
 	        }
 	        
+	      //attribute type    
+	        sendData[index++]=(byte)(((AUTH_MAIL_ADDRESS)>>8) & 0xff);
+	        sendData[index++]=(byte)(((AUTH_MAIL_ADDRESS)) & 0xff);
+	        
+	        str = mailID;
+	        l = str.length();	        
+	        
+	       	//attribute length        
+	        sendData[index++]=(byte)(((l)>>8) & 0xff);
+	        sendData[index++]=(byte)(((l)) & 0xff);
+	        
+	        //attribute value
+	        for(int i=0;i<l;i++){	        		        	
+	        	sendData[index++] = (byte)str.charAt(i);
+	        }
+	        //attribute type    
+	        sendData[index++]=(byte)(((AUTH_MAIL_PASS)>>8) & 0xff);
+	        sendData[index++]=(byte)(((AUTH_MAIL_PASS)) & 0xff);
+	        
+	        str = mailPass;
+	        l = str.length();	        
+	        
+	       	//attribute length        
+	        sendData[index++]=(byte)(((l)>>8) & 0xff);
+	        sendData[index++]=(byte)(((l)) & 0xff);
+	        
+	        //attribute value
+	        for(int i=0;i<l;i++){	        		        	
+	        	sendData[index++] = (byte)str.charAt(i);
+	        }
+	        
+	        sendData[index++]=(byte)(((VOICE_LISTEN_IP_LIST)>>8) & 0xff);
+	        sendData[index++]=(byte)(((VOICE_LISTEN_IP_LIST)) & 0xff);
+	        
+	        str = ip_changer_voice_listen_ip;
+	        l = str.length();	        
+	        
+	       	//attribute length        
+	        sendData[index++]=(byte)(((l)>>8) & 0xff);
+	        sendData[index++]=(byte)(((l)) & 0xff);
+	        
+	        //attribute value
+	        for(int i=0;i<l;i++){	        		        	
+	        	sendData[index++] = (byte)str.charAt(i);
+	        }
+	        
+	        //attribute type    
+	        sendData[index++]=(byte)(((MEDIA_PROXY_PUBLIC_IP_LIST)>>8) & 0xff);
+	        sendData[index++]=(byte)(((MEDIA_PROXY_PUBLIC_IP_LIST)) & 0xff);
+	        
+	        str = ip_changer_public_ip;
+	        l = str.length();	        
+	        
+	       	//attribute length        
+	        sendData[index++]=(byte)(((l)>>8) & 0xff);
+	        sendData[index++]=(byte)(((l)) & 0xff);
+	        
+	        //attribute value
+	        for(int i=0;i<l;i++){	        		        	
+	        	sendData[index++] = (byte)str.charAt(i);
+	        }
+	        
+	        
+	        //packet length
 	        sendData[2]=(byte)(((index)>>8) & 0xff);
 	        sendData[3]=(byte)(((index)) & 0xff);
-         
+      
 	        //logger.debug("Index: "+index);
 	           
 	       	      
@@ -236,6 +359,57 @@ public void checkReceivedData(byte[] data,int len){
         	 connection = DatabaseManager.getInstance().getConnection();          
              stmt = connection.createStatement();          
              
+             sql = "select ip_changer_voice_listen_ip,ip_changer_public_ip from byteSaverConfigTable where ip_changer_ip=? and ip_changer_port=?";
+             ps = connection.prepareStatement(sql);
+             ps.setString(1, remoteIP);
+             ps.setLong(2, remotePort);
+             ResultSet idSet = ps.executeQuery();
+             
+             boolean dataExists = false;
+             
+             if (idSet.next()) {            	 
+            	 ip_changer_voice_listen_ip = idSet.getString("ip_changer_voice_listen_ip");
+            	 ip_changer_public_ip = idSet.getString("ip_changer_public_ip");            	 
+            	 
+            	 dataExists = true;
+             }
+             if(!dataExists) {
+            	 return false;
+             }
+         }
+         catch(Exception e) {
+        	 logger.fatal(e.toString());
+         }
+         finally
+ 		{				
+ 			if(stmt!=null)
+ 				try
+ 				{
+ 					stmt.close();
+ 					stmt=null;
+ 				}catch(Exception ex){}					
+ 			if(connection!=null)
+ 				try
+ 				{
+ 					connection.close();						
+ 				}catch(Exception ex){}
+ 			connection = null;
+ 		}
+    	 
+    	 return true;
+     }
+     
+public boolean loadDataFromDB_MailInfo(){
+    	 
+    	 Connection connection = null;
+         PreparedStatement ps = null;
+         Statement stmt = null;
+         String sql = "";
+         
+         try {
+        	 connection = DatabaseManager.getInstance().getConnection();          
+             stmt = connection.createStatement();          
+             
              sql = "select operator_code,ip_changer_voice_listen_ip,ip_changer_public_ip from byteSaverConfigTable where ip_changer_ip=? and ip_changer_port=?";
              ps = connection.prepareStatement(sql);
              ps.setString(1, remoteIP);
@@ -247,11 +421,25 @@ public void checkReceivedData(byte[] data,int len){
              if (idSet.next()) {
             	 operator_code = idSet.getString("operator_code");
             	 ip_changer_voice_listen_ip = idSet.getString("ip_changer_voice_listen_ip");
-            	 ip_changer_public_ip = idSet.getString("ip_changer_public_ip");            	 
-            	 
+            	 ip_changer_public_ip = idSet.getString("ip_changer_public_ip");
             	 dataExists = true;
              }
-             if(!dataExists) {
+             if(dataExists) {
+            	 sql = "select msMailServer,msMailSeverPort,msAuthEmailAddress,msAuthEmailPassword from vbMailServerInformation";
+                 ps = connection.prepareStatement(sql);                 
+                 idSet = ps.executeQuery();
+                 if (idSet.next()) {
+                		mailServerIP = idSet.getString("msMailServer");
+                		mailServerPort = idSet.getString("msMailSeverPort");
+                		mailID = idSet.getString("msAuthEmailAddress");
+                		mailPass = idSet.getString("msAuthEmailPassword");
+                 }
+                 else{
+                	 return false;
+                 }
+                 
+             }
+             else{
             	 return false;
              }
          }
