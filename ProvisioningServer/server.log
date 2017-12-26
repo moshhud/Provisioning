@@ -1,0 +1,14 @@
+2017-12-22 14:42:38,653 FATAL UDPServerTLV:101 - Error 1: java.net.BindException: Cannot assign requested address: Cannot bind
+2017-12-22 14:42:52,299 FATAL UDPServerTLV:101 - Error 1: java.net.BindException: Cannot assign requested address: Cannot bind
+2017-12-22 14:43:05,962 FATAL UDPServerTLV:101 - Error 1: java.net.BindException: Cannot assign requested address: Cannot bind
+2017-12-22 14:44:02,357 FATAL UDPServerTLV:101 - Error 1: java.net.BindException: Cannot assign requested address: Cannot bind
+2017-12-22 14:44:28,096 FATAL UDPServerTLV:101 - Error 1: java.net.BindException: Cannot assign requested address: Cannot bind
+2017-12-22 15:06:19,882 DEBUG ProvisioningServerMain:23 - Server started successfully.
+2017-12-22 15:06:19,886 FATAL UDPServerTLV:101 - Error 1: java.net.BindException: Cannot assign requested address: Cannot bind
+2017-12-22 23:28:24,220 DEBUG UDPServerTLV:44 - run...
+2017-12-22 23:28:24,220 DEBUG ProvisioningServerMain:23 - Server started successfully.
+2017-12-22 23:28:24,228 DEBUG UDPServerTLV:46 - Server started with: 127.0.0.1:320
+2017-12-22 23:28:24,229 DEBUG UDPServerTLV:58 - Waiting for client Request...
+2017-12-22 23:28:30,614 DEBUG UDPServerTLV:44 - run...
+2017-12-22 23:28:30,614 DEBUG ProvisioningServerMain:23 - Server started successfully.
+2017-12-22 23:28:30,623 FATAL UDPServerTLV:73 - Error 1: java.net.BindException: Address already in use: Cannot bind
