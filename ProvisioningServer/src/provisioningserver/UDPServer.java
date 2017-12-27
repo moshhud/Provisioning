@@ -7,9 +7,9 @@ import java.net.InetAddress;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 
-public class UDPServerTLV extends Thread{
-	public static UDPServerTLV obUDPServerTLV;
-	static Logger logger = Logger.getLogger(UDPServerTLV.class);
+public class UDPServer extends Thread{
+	public static UDPServer obUDPServerTLV;
+	static Logger logger = Logger.getLogger(UDPServer.class);
 	ProcessService obProcessService;
 	   
 	
@@ -21,7 +21,7 @@ public class UDPServerTLV extends Thread{
 	boolean running = false;
 	
 	
-	public static UDPServerTLV getInstance(){
+	public static UDPServer getInstance(){
 		if(obUDPServerTLV==null){			
 			createInstance();
 		}
@@ -29,9 +29,9 @@ public class UDPServerTLV extends Thread{
 		return obUDPServerTLV;
 	}//
 	
-	public static synchronized UDPServerTLV createInstance(){
+	public static synchronized UDPServer createInstance(){
 		if(obUDPServerTLV==null){
-			obUDPServerTLV = new UDPServerTLV();
+			obUDPServerTLV = new UDPServer();
 			LoadConfiguration();
 		}
 		return obUDPServerTLV;

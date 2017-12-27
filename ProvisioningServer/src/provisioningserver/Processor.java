@@ -96,7 +96,7 @@ public void checkReceivedData(byte[] data,int len){
             	    //check source IP with database and if exists then provide configuration...
             	    if(loadDataFromDB()) {
             	    	DatagramPacket sendPacket = createConfigurationPacket();                  
-            	    	UDPServerTLV.getInstance().serverSocket.send(sendPacket);
+            	    	UDPServer.getInstance().serverSocket.send(sendPacket);
             	    }
             	    else {
             	    	logger.debug("No Data Found");
@@ -107,7 +107,7 @@ public void checkReceivedData(byte[] data,int len){
             		logger.debug("Got IP Changer info request");
             		if(loadDataFromDB_MailInfo()) {
             	    	DatagramPacket sendPacket = createResponsePacket();                  
-            	    	UDPServerTLV.getInstance().serverSocket.send(sendPacket);
+            	    	UDPServer.getInstance().serverSocket.send(sendPacket);
             	    }
             	    else {
             	    	logger.debug("No Data Found");
