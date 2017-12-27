@@ -20,16 +20,16 @@ public class Processor extends Thread{
 	DatagramPacket receivePacket = null;
 	final int PACKET_TYPE_IPCHANGER_IP_REQUEST=0x0000;
 	final int PACKET_TYPE_IPCHANGER_IP_RESPONSE=0x0001;
-	final int VOICE_LISTEN_IP_LIST=0x0002;
-	final int MEDIA_PROXY_PUBLIC_IP_LIST=0x0003;
-	final int OPERATOR_CODE=0x0004;  
 	
-	final int PACKET_TYPE_MAILSERVER_REQUEST=0x0064;
-	final int PACKET_TYPE_MAILSERVER_RESPONSE=0x0065;
+	final int PACKET_TYPE_IPCHANGER_MAILSERVER_REQUEST=0x0064;
+	final int PACKET_TYPE_IPCHANGER_MAILSERVER_RESPONSE=0x0065;
 	final int MAILSERVER_IP=0x0066;
 	final int MAILSERVER_PORT=0x0067;
 	final int AUTH_MAIL_ADDRESS=0x0068;
 	final int AUTH_MAIL_PASS=0x0069;	
+	final int VOICE_LISTEN_IP_LIST=0x0002;
+	final int MEDIA_PROXY_PUBLIC_IP_LIST=0x0003;
+	final int OPERATOR_CODE=0x0004;  
 
 	String remoteIP = "192.168.20.130";
 	int remotePort = 220;
@@ -103,9 +103,10 @@ public void checkReceivedData(byte[] data,int len){
             	    }
             	    
             	    break;
-            	case PACKET_TYPE_MAILSERVER_REQUEST:
+            	case PACKET_TYPE_IPCHANGER_MAILSERVER_REQUEST:
             		logger.debug("Got IP Changer info request");
             		if(loadDataFromDB_MailInfo()) {
+            			logger.debug("Sending Reply to "+remoteIP+":"+remotePort);
             	    	DatagramPacket sendPacket = createResponsePacket();                  
             	    	UDPServer.getInstance().serverSocket.send(sendPacket);
             	    }
@@ -233,8 +234,8 @@ public void checkReceivedData(byte[] data,int len){
 	        int index=0;   	          
 	         
 	        //packet type
-	        sendData[index++]=(byte)((PACKET_TYPE_MAILSERVER_RESPONSE>>8) & 0xff);
-	        sendData[index++]=(byte)((PACKET_TYPE_MAILSERVER_RESPONSE) & 0xff);	        
+	        sendData[index++]=(byte)((PACKET_TYPE_IPCHANGER_MAILSERVER_RESPONSE>>8) & 0xff);
+	        sendData[index++]=(byte)((PACKET_TYPE_IPCHANGER_MAILSERVER_RESPONSE) & 0xff);	        
 	        index++;
 	        index++;
 	        //attribute type    
@@ -410,7 +411,7 @@ public boolean loadDataFromDB_MailInfo(){
         	 connection = DatabaseManager.getInstance().getConnection();          
              stmt = connection.createStatement();          
              
-             sql = "select operator_code,ip_changer_voice_listen_ip,ip_changer_public_ip from byteSaverConfigTable where ip_changer_ip=? and ip_changer_port=?";
+             sql = "select operator_code,ip_changer_voice_listen_ip,ip_changer_public_ip from byteSaverIPChangerConfig where ip_changer_ip=? and ip_changer_port=?";
              ps = connection.prepareStatement(sql);
              ps.setString(1, remoteIP);
              ps.setLong(2, remotePort);
